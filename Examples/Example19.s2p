@@ -1,0 +1,10 @@
+! 2-port network, S-parameter and noise data
+! Default MA format, GHz frequencies, 50-ohm reference, S-parameters
+# !
+! NETWORK PARAMETERS
+2 0.95 -26 3.57 157 0.04 76 0.66 -14
+22 0.60 -144 1.30 40 0.14 40 0.56 -85
+! NOISE PARAMETERS
+4 0.7 0.64 69 0.38
+18 2.7 0.46 -33 0.40
+
