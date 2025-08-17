@@ -4,18 +4,10 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "docs/**"
-      - "src/**"
-      - "*.toml"
     tags: ["*"]
   pull_request:
     branches:
       - main
-    paths:
-      - "docs/**"
-      - "src/**"
-      - "*.toml"
     types: [opened, synchronize, reopened]
 
 concurrency:
@@ -45,9 +37,9 @@ jobs:
         run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using BestieTemplate
-            DocMeta.setdocmeta!(BestieTemplate, :DocTestSetup, :(using BestieTemplate); recursive=true)
-            doctest(BestieTemplate)'
+            using TouchstoneParser
+            DocMeta.setdocmeta!(TouchstoneParser, :DocTestSetup, :(using TouchstoneParser); recursive=true)
+            doctest(TouchstoneParser)'
       - name: Generate and deploy documentation
         run: julia --project=docs docs/make.jl
         env:
