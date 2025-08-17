@@ -16,24 +16,41 @@ using LinearAlgebra
     A = [A;;;A]
     
     TouchstoneParser.write_touchstone("testfile.ts", F, A, 50, default_comments = false, version = "2.0", default_date = false)
-    ts = TouchstoneParser.readfile("testfile.ts")
+    ts = TouchstoneParser.read_touchstone("testfile.ts")
     @test ts.data == A
     
     TouchstoneParser.write_touchstone("testfile2.s6p", F, A, 50, default_comments = false, version = "1.0", default_date = false)
-    s6p = TouchstoneParser.readfile("testfile2.s6p")
+    s6p = TouchstoneParser.read_touchstone("testfile2.s6p")
     @test s6p.data == A
+
+    ex18 = TouchstoneParser.read_touchstone("../Examples/Example18.ts")
+    TouchstoneParser.write_touchstone("Example18_2.ts", ex18.frequency, ex18.data, ex18.references; version = "2.1", 
+        noise_data = ex18.noise_data, noise_f = ex18.noise_frequency, twoportorder = "21_12")
+    newex18 = TouchstoneParser.read_touchstone("./Example18_2.ts")
+    
+    ex19 = TouchstoneParser.read_touchstone("../Examples/Example19.s2p")
+    TouchstoneParser.write_touchstone("Example19_2.s2p", ex18.frequency, ex18.data, ex18.references; version = "1.0", 
+        noise_data = ex19.noise_data, noise_f = ex18.noise_frequency, twoportorder = "21_12")
+    newex19 = TouchstoneParser.read_touchstone("./Example19_2.s2p")
+    
+    @test ex18.data == newex18.data
+    @test ex19.data == newex19.data
+    
+    @test ex18.noise_data == newex18.noise_data
+    @test ex19.noise_data == newex19.noise_data
+
 end
 
 # Z parameter
 @testset "Example8.ts" begin
-    ex8 = TouchstoneParser.readfile("../Examples/Example8.ts")
+    ex8 = TouchstoneParser.read_touchstone("../Examples/Example8.ts")
     @test ex8.type === :Z
 end
 
 
 @testset "LOWER format" begin
-    ex6 = TouchstoneParser.readfile("../Examples/Example6.ts")
-    ex7 = TouchstoneParser.readfile("../Examples/Example7.ts")
+    ex6 = TouchstoneParser.read_touchstone("../Examples/Example6.ts")
+    ex7 = TouchstoneParser.read_touchstone("../Examples/Example7.ts")
 
     values_6 = ex6.data
     values_7 = ex7.data
@@ -45,8 +62,8 @@ end
 end
 
 @testset "Example15.s4p" begin # Page 17 - Touchstone File Format Specification
-    ex15 = TouchstoneParser.readfile("../Examples/Example15.s4p")
-    #ex15 = TouchstoneParser.readfile("../Examples/Example15.s4p")
+    ex15 = TouchstoneParser.read_touchstone("../Examples/Example15.s4p")
+    #ex15 = TouchstoneParser.read_touchstone("../Examples/Example15.s4p")
 
     optionline = "# " * string(ex15.units) * " " * string(ex15.type) * " " * string(ex15.format) * " R " *  join(Int.(ex15.resistance)," ")
 
@@ -62,8 +79,8 @@ end
 
 # Parse Mixed Mode Order and ignore second option line when there is more than one.
 @testset "Example17.ts" begin # Page 17 - Touchstone File Format Specification
-    ex17 = TouchstoneParser.readfile("../Examples/Example17.ts")
-    # ex17 = TouchstoneParser.readfile("../Examples/Example17.ts")
+    ex17 = TouchstoneParser.read_touchstone("../Examples/Example17.ts")
+    # ex17 = TouchstoneParser.read_touchstone("../Examples/Example17.ts")
 
     optionline = "# " * string(ex17.units) * " " * string(ex17.type) * " " * string(ex17.format) * " R " *  join(Int.(ex17.resistance)," ")
 
@@ -82,8 +99,8 @@ end
 # Noise Parameters v1.0 and 2.1
 
 @testset "Example19.s2p" begin # Page 26 - Touchstone File Format Specification
-    ex19 = TouchstoneParser.readfile("../Examples/Example19.s2p")
-    #ex19 = TouchstoneParser.readfile("../Examples/Example19.s2p")
+    ex19 = TouchstoneParser.read_touchstone("../Examples/Example19.s2p")
+    #ex19 = TouchstoneParser.read_touchstone("../Examples/Example19.s2p")
 
     optionline = "# " * string(ex19.units) * " " * string(ex19.type) * " " * string(ex19.format) * " R " *  join(Int.(ex19.resistance)," ")
 
@@ -113,8 +130,8 @@ end
 end
 
 @testset "Example20.ts" begin # Page 26 - Touchstone File Format Specification
-    ex20 = TouchstoneParser.readfile("../Examples/Example20.ts")
-    #ex20 = TouchstoneParser.readfile("../Examples/Example20.ts")
+    ex20 = TouchstoneParser.read_touchstone("../Examples/Example20.ts")
+    #ex20 = TouchstoneParser.read_touchstone("../Examples/Example20.ts")
 
     optionline = "# " * string(ex20.units) * " " * string(ex20.type) * " " * string(ex20.format) * " R " *  join(Int.(ex20.resistance)," ")
 
@@ -173,7 +190,7 @@ using LinearAlgebra: norm
 end
 
 @testset "Transformations2" begin
-    ex = TouchstoneParser.readfile("../Examples/Spiral_Inductor_Microstrip_Spiral.s2p")
+    ex = TouchstoneParser.read_touchstone("../Examples/Spiral_Inductor_Microstrip_Spiral.s2p")
     m1 = map((s,z) -> TouchstoneParser.s2z(s,z), eachslice(ex.data, dims = 3), eachcol(ex.z0))
     m2 = similar(ex.data)
     for z in 1:length(ex.frequency)
@@ -181,4 +198,3 @@ end
     end
     @test stack(m1) == m2
 end
-

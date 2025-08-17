@@ -133,8 +133,6 @@ function get_matrixformat(ps, ts, line, f)
     return nothing
 end
 
-#TODO: Split in 2 functions, the one used when parsing should only copy the line in ts struct
-# No lo he probado
 function get_mixedmode_order(ps, ts, line, f)
     ps.found_mixedmode_order = (ps.count_line, true)
     mixed_mode_orders = split(line)[3:end]
@@ -179,7 +177,6 @@ function get_info(ps, ts, line, f)
     return nothing
 end
 
-#TODO: HFSS style files. 
 function get_networkdata(ps, ts, line, f)
     if ts.version >= "2.0"
         line = readline(f); newline!(ps)
@@ -222,7 +219,7 @@ function get_networkdata(ps, ts, line, f)
             end
 
             # If we count more elements than num_values it has to be a new line
-            # TODO: I think i can delete this part
+            # I think i can delete this part
             if (count_elements + length_line) > num_values
                 is_newline = true
                 count_elements = 0

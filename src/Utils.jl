@@ -204,6 +204,11 @@ end
 
 
 # skrf stores this info so i think it's maybe useful.
+"""
+    comments_after_option_line(ts::TSParser)
+
+Returns a Vector of Tuples{Int, String} where the Integer represents the line where the comment appears.
+"""
 function comments_after_option_line(ts)
     ps = ts.pstate
     optline = ps.found_optionline[1]
@@ -258,9 +263,9 @@ comment styles used by softwares:
 ## Examples
 
 ```
-using TouchstoneParser: readfile
+using TouchstoneParser: read_touchstone
 
-ts = TouchstoneParser.readfile(path)
+ts = TouchstoneParser.read_touchstone(path)
 v = simvariables(ts)
 ```
 

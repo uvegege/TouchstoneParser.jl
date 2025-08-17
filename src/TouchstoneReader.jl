@@ -12,10 +12,16 @@ function process_section!(parserstate, touchstone, line, f, section_tags)
 end
 
 
-function readfile(file)
+"""
+    read_touchstone(file)
 
+Read a Touchstone file with version 1.0, 1.1, 2.0 or 2.1. 
+
+Returns a struct `TSParser` with the data. 
+"""
+function read_touchstone(file)
     ps = ParserState()
-    ts = TSParser()
+    ts = TSParser(file)
     section = :Start
 
     process_extension!(ts, ps, file)

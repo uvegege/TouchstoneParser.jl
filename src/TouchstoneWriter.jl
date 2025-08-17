@@ -1,9 +1,36 @@
 using Printf
 using Dates
 
+
+"""
+    write_touchstone(filename, F, A, z0; kwargs...)
+
+Write a Touchstone file named “filename” using the format specified in the name or in the keyword `version`.
+
+## Arguments
+
+- filename: name of the file.
+- F: Vector of frequencies.
+- A: Data to write on the Touchstone. Can be a Vector{Matrix{ComplexF64}} or a Array{ComplexF64, 3}
+- z0: Number of Vector of numbers of length equal to the number of ports.
+
+
+## Keywords
+
+- version: Default to `""`. Must be a string like `"1.0"`, `"1.1"`, `"2.0"` or `"2.1"`.
+- default_comments: Default to `true`. Write the comment `! Touchstone file created with TouchstoneParser.jl`
+- default_date: Default to `true`. Add the Date to the file as a comment.
+- funit: Default to `:GHz`. Must be a Symbol.
+- ptype: Default to `:S`. Must be a Symbol.
+- matrixformat: Default to `:FULL`. Can also be `:UPPER` or `:LOWER`.
+- twoportorder: Default to `"12_21`. The other option is "21_12".
+- noise_f: Default to `nothing`. Should be a Vector for each noise data.
+- noise_data: Default to `nothing`. Should be the noise data.
+- mixed_mode_order: Default to `""`.
+"""
 function write_touchstone(filename, F, A, z0; version = "", default_comments = true, default_date = true,
     matrixformat = :FULL, twoportorder = "12_21", noise_data = nothing, noise_f = nothing, 
-    funit = :GHz, ptype = :S, format = :RI, mixed_mode_order = "")
+    funit = :GHz, ptype = :S, format = :MA, mixed_mode_order = "")
 
     if !isa(z0, AbstractArray)
         z0 = [z0]
@@ -39,21 +66,32 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
         write(io, "[Version] ", version, "\n")
     end
 
+    
+
     if version > "2"
+        write(io, "# ", funit, " ", ptype, " ", format, "  R ", z0[1], "\n")
         write(io, "[Number of Ports] ", string(nports), "\n")
         nports == 2 && write(io, "[Two-Port Data Order] ", string(twoportorder), "\n")
         write(io, "[Number of Frequencies] ", string(length(F)), "\n")
+        if !isnothing(noise_f)
+            write(io, "[Number of Noise Frequencies] ", string(length(noise_f)), "\n")
+        end
         if length(z0) != nports
             z0 = repeat(z0, nports)
-            write(io, "[Reference] \n", join(z0, " "), "\n")
         end
-        write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
+            write(io, "[Reference] \n", join(z0, " "), "\n")
+
         if !isempty(mixed_mode_order)
-            write(io, "[Mixed-Mode Order]", mixed_mode_order)
+            write(io, "[Mixed-Mode Order]", mixed_mode_order, "\n")
         end
         write(io, "[Network Data] \n")
     else
-        write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
+        if version == "1.0"
+            write(io, "# ", funit, " ", ptype, " ", format, "  R ", z0[1], "\n")
+        else
+            write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
+        end
+        write(io, "! NETWORK data \n")
     end
 
     lenF = length(F)
@@ -71,10 +109,10 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
             p = parameters[idp]
             if format === :MA
                 p1 = abs(p)
-                p2 = angle(p)
+                p2 = angle(p) * 180 / pi
             elseif format === :DB
                 p1 = 20*log10(abs(p))
-                p2 = angle(p)
+                p2 = angle(p) * 180 / pi
             else
                 p1 = real(p)
                 p2 = imag(p)
@@ -116,13 +154,28 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
         end
     end
 
-    # Write noise data: Need Tests
     if !isnothing(noise_f) & !isnothing(noise_data)
-        for (f, p) in zip(noise_f, noise_data)
-            write(io, @sprintf("%.5f      %.5f      %.5f      %.5f      %.5f      \n", f, p...))
+        if typeof(noise_data) == Vector{NoiseData}
+            version >= "2" ? write(io, "[Noise Data] \n") : write(io, "! NOISE DATA \n")
+            for (f, n) in zip(noise_f, noise_data)
+                if format === :MA
+                    p1 = abs(n.reflection)
+                    p2 = angle(n.reflection) * 180 / pi
+                elseif format === :DB
+                    p1 = 20*log10(abs(n.reflection))
+                    p2 = angle(n.reflection) * 180 / pi
+                else
+                    p1 = real(n.reflection)
+                    p2 = imag(n.reflection)
+                end
+                
+                Reff = version < "2" ? n.Reff/z0[1] : n.Reff
+                p = (n.min_noise_figure, p1, p2, Reff)
+                write(io, @sprintf("%.5f      %.5f      %.5f      %.5f      %.5f      \n", f, p...))
+            end
         end
     end
-
+    version >= "2" && write(io, "[End]\n")
     close(io)
     return nothing
 end
