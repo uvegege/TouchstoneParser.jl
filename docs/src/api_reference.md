@@ -21,7 +21,7 @@ read_touchstone
 write_touchstone
 
 TSParser
-NoiseDatas
+NoiseData
 
 simvariables
 comments_after_option_line

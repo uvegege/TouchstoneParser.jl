@@ -258,7 +258,7 @@ uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.TouchstoneParser]]
 deps = ["Dates", "LinearAlgebra", "Printf"]
-git-tree-sha1 = "af42e905e700dd5fad431473b71203b455a40d74"
+git-tree-sha1 = "462734376eaa2a2bdc88d60f6d0705a42a3b7aec"
 repo-rev = "main"
 repo-url = "C:\\MisProyecto\\Upload\\TouchstoneParser"
 uuid = "b369b07b-dee1-4342-88e3-29a776361291"
