@@ -6,7 +6,7 @@ export TSParser, NoiseData
 export simvariables, comments_after_option_line
 
 include("./TouchstoneTypes.jl")
-include("./utils.jl")
+include("./Utils.jl")
 include("./Transformations.jl")
 include("./ParserFunctions.jl")
 include("./TouchstoneReader.jl")
