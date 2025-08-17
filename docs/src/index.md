@@ -24,7 +24,7 @@ This package is currently **unregistered**. While the core functionality has bee
 ## Installation
 
 ```julia
-] add TouchstoneParser
+] add https://github.com/uvegege/TouchstoneParser.jl
 ```
 
 ## Usage
