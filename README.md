@@ -1,5 +1,8 @@
 # TouchstoneParser
 
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://uvegege.github.io/SmithChart.jl/dev/)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://uvegege.github.io/SmithChart.jl/stable/)
+
 `TouchstoneParser.jl` is a Julia package for reading [Touchstone](https://ibis.org/touchstone_ver2.1/touchstone_ver2_1.pdf) files.  
 It implements the specification (versions **1.0, 1.1, 2.0 and 2.1**) and provides a simple API to access data and metadata.
 
