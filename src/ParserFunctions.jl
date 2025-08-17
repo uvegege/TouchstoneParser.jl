@@ -17,15 +17,22 @@ is_networkdata(line) = startswith(line, "[Network Data]")
 is_noisedata(line) = startswith(line, "[Noise Data]")
 is_endfile(line) = startswith(line, "[End]")
 # https://github.com/scikit-rf/scikit-rf/blob/master/skrf/io/ts.py
-is_hfss_gamma(line) = startswith(line, "! gamma") 
-is_hfss_portimpedance(line) = startswith(line, "! port impedance") 
-is_hfss_port(line) = startswith(line, "! port") 
-is_hfss_terminaldata(line) = startswith(line, "! terminal data exported") 
-is_hfss_modaldata(line) = startswith(line, "! modal data exported") 
+is_hfss_gamma(line) = startswith(lowercase(line), "! gamma") 
+is_hfss_portimpedance(line) = startswith(lowercase(line), "! port impedance") 
+is_hfss_port(line) = startswith(lowercase(line), "! port") 
+is_hfss_terminaldata(line) = startswith(lowercase(line), "! terminal data exported") 
+is_hfss_modaldata(line) = startswith(lowercase(line), "! modal data exported") 
 
 # GET FUNCTIONS
-
 function get_comment(ps, ts, line, f)
+
+    is_hfss_gamma(line) && return  
+    is_hfss_portimpedance(line) && return
+    
+    f_hfss_port(ps, ts, line, f) 
+    f_hfss_modaldata(ps, ts, line, f) 
+    f_hfss_terminaldata(ps, ts, line, f)
+
     push!(ts.comments, (ps.count_line, line))
     return nothing
 end
@@ -37,6 +44,12 @@ function get_version(ps, ts, line, f)
 end
 
 function get_optionline(ps, ts, line, f)
+    # Page 6. Each Touchstone data file shall contain an option line 
+    # (additional option lines after the first one shall be ignored)
+    if ps.found_optionline[2] == true
+        return
+    end
+    line = uppercase(line)
     ps.found_optionline = (ps.count_line, true)
     units = find_units(line)
     format = find_format(line)
@@ -74,7 +87,6 @@ function get_n_freqs(ps, ts, line, f)
     ps.found_nfreqs = (ps.count_line, true)
     ts.n_freqs = parse(Int, split(split(line, "!")[1])[end])
     sizehint!(ts.frequency, ts.n_freqs)
-    sizehint!(ts.v, ts.n_freqs)
     return nothing
 end
 
@@ -111,9 +123,9 @@ end
 
 function get_matrixformat(ps, ts, line, f)
     ps.found_matrixformat = (ps.count_line, true)
-    value = split(uppercase(split(line, "!")[1]))[end]
-    if value in ("FULL", "LOWER", "UPPER")
-        ts.matrixformat = Symbol(value)
+    value = Symbol(split(uppercase(split(line, "!")[1]))[end])
+    if value in (:FULL, :LOWER, :UPPER)
+        ts.matrixformat = value
     else
         @warn "The value read from [Matrix Format] does not match Full, Upper or Lower. Default to Full"
         ts.matrixformat = :FULL
@@ -122,12 +134,13 @@ function get_matrixformat(ps, ts, line, f)
 end
 
 #TODO: Split in 2 functions, the one used when parsing should only copy the line in ts struct
+# No lo he probado
 function get_mixedmode_order(ps, ts, line, f)
     ps.found_mixedmode_order = (ps.count_line, true)
-    mixed_mode_orders = split(line)[2:end]
+    mixed_mode_orders = split(line)[3:end]
     dict_vals = Dict(:C => Set{Tuple{Int, Int}}(), :D => Set{Tuple{Int, Int}}(), :S => Set{Int}())
-    if length(mixed_mode_orders) == nports
-        for mmo in mixed_mode_order
+    if length(mixed_mode_orders) == ts.n_ports
+        for mmo in mixed_mode_orders
             key = Symbol(uppercase(mmo[1]))
             if key === :C
                 push!(dict_vals[key], tuple(parse.(Int, split(mmo[2:end],","))...))
@@ -150,7 +163,7 @@ function get_mixedmode_order(ps, ts, line, f)
         if any(in.(valsS, valsC))
             @warn "Each port number must appear in either one single-ended or two mixed-mode descriptors." 
         end
-        ts.mixed_mode_order = mixed_mode_order
+        ts.mixed_mode_order = join(mixed_mode_orders," ")
     else
         @warn "Number of values of [Mixed-Mode Order] shall match [Number of Ports]"
     end
@@ -166,7 +179,7 @@ function get_info(ps, ts, line, f)
     return nothing
 end
 
-#TODO: HFSS style files
+#TODO: HFSS style files. 
 function get_networkdata(ps, ts, line, f)
     if ts.version >= "2.0"
         line = readline(f); newline!(ps)
@@ -177,21 +190,31 @@ function get_networkdata(ps, ts, line, f)
     num_values = num_vals(ts)
     line_buffer = zeros(Float64, num_values - 1, ) 
     stored_lengths = Int[]; sizehint!(stored_lengths, 99)
+    data = Matrix{ComplexF64}[]
+    if ts.n_freqs > 0
+        sizehint!(data, ts.n_freqs)
+    end
     is_newline = true
     count_elements = 0
     pos = position(f)
     firstit = true
     while !eof(f) & !is_noisedata(line)
-        if !firstit
+
+        if !firstit | f_comment(ps, ts, line, f)
             pos = position(f) #  #!isempty(line) && (pos = position(f))
             line = readline(f); newline!(ps)
         end
-        if !f_comment(ps, ts, line, f) & !isempty(line) # Check if is a comment
+
+        f_hfss_gamma(ps, ts, line, f)
+        f_hfss_portimpedance(ps, ts, line, f)
+            
+        if !f_comment(ps, ts, line, f) && !isempty(line) && !is_endfile(line) && !is_noisedata(line) # Check if is a comment
             firstit = false
             act_line = split(line, "!") # In case there is a comment at the end of the line
             values_line = split(act_line[1])
             length_line = length(values_line)
             values_float = parse.(Float64, values_line)
+
             # In some rare cases maybe you don't know the number of ports. Imagine a snp without extension.
             if n_ports == 0
                 n_ports = infere_n_ports(stored_lengths, length_line, ts, line_buffer)
@@ -199,7 +222,7 @@ function get_networkdata(ps, ts, line, f)
             end
 
             # If we count more elements than num_values it has to be a new line
-            # TODO: I think i can delete this part,
+            # TODO: I think i can delete this part
             if (count_elements + length_line) > num_values
                 is_newline = true
                 count_elements = 0
@@ -224,13 +247,14 @@ function get_networkdata(ps, ts, line, f)
             if (count_elements >= num_values-2) 
                 is_newline = true
                 count_elements = 0
-                push!(ts.v, line_to_matrix(line_buffer, ts))
+                push!(data, line_to_matrix(line_buffer, ts))
                 line_buffer .= 0.0
             end
             last_freq = freq
         end
     end
-    seek(f, pos) 
+    !eof(f) && (seek(f, pos); seekline!(ps))
+    ts.data = stack(data)
     return nothing
 end
 
@@ -253,14 +277,47 @@ function get_noisedata(ps, ts, line, f)
     return nothing
 end
 
-get_hfss_gamma(ps, ts, line, f) = return nothing
-get_hfss_portimpedance(ps, ts, line, f) = return nothing
-get_hfss_port(ps, ts, line, f) = return nothing
-get_hfss_modaldata(ps, ts, line, f) = return nothing
+function get_hfss_gamma(ps, ts, line, f)
+    nline = split(lowercase(line), "! gamma")[2]
+    act_line = split(nline, "!") 
+    values_line = split(act_line[1])
+    values_float = parse.(Float64, values_line)
+    b = reshape(values_float, 2, div(length(values_float),2))
+    values_complex = [Complex(p1, p2) for (p1, p2) in eachcol(b)]
+    append!(ts.hfss_gamma, values_complex)
+    return
+end
+
+function get_hfss_portimpedance(ps, ts, line, f)
+    nline = split(lowercase(line), "! port impedance")[2]
+    act_line = split(nline, "!") 
+    values_line = split(act_line[1])
+    values_float = parse.(Float64, values_line)
+    b = reshape(values_float, 2, div(length(values_float),2))
+    values_complex = [Complex(p1, p2) for (p1, p2) in eachcol(b)]
+    append!(ts.hfss_impedance, values_complex)
+    return
+end
+
+function get_hfss_port(ps, ts, line, f) 
+    push!(ts.port_names , split(line, "=")[end])
+    return nothing
+end
+
+function get_hfss_modaldata(ps, ts, line, f) 
+    ts.hfss_data_type = :modal
+    return
+end
+
+function get_hfss_terminaldata(ps, ts, line, f) 
+    ts.hfss_data_type = :terminal
+    return
+end
+
 
 # CHECK FUNCTIONS
 
-function checkpart!(isfunc, getfun, ps, ts, line, f)
+function checkpart!(isfunc::IF, getfun::GF, ps, ts, line, f) where {IF, GF}
     sw = isfunc(line)
     if sw
         getfun(ps, ts, line, f)
@@ -271,7 +328,7 @@ end
 f_comment(ps, ts, line, f) = checkpart!(is_comment, get_comment, ps, ts, line, f)
 f_optionline(ps, ts, line, f) = checkpart!(is_optionline, get_optionline, ps, ts, line, f)
 f_version(ps, ts, line, f) = checkpart!(is_version, get_version, ps, ts, line, f)
-f_nports(ps, ts, line, f) = checkpart!(is_nports, get_nports, ps, ts, line, f)
+f_n_ports(ps, ts, line, f) = checkpart!(is_nports, get_nports, ps, ts, line, f)
 f_matrixformat(ps, ts, line, f) = checkpart!(is_matrixformat, get_matrixformat, ps, ts, line, f)
 f_twoport_order(ps, ts, line, f) = checkpart!(is_twoport_order, get_twoport_order, ps, ts, line, f)
 f_n_freqs(ps, ts, line, f) = checkpart!(is_n_freqs, get_n_freqs, ps, ts, line, f)
@@ -286,4 +343,4 @@ f_hfss_gamma(ps, ts, line, f) = checkpart!(is_hfss_gamma, get_hfss_gamma, ps, ts
 f_hfss_portimpedance(ps, ts, line, f) = checkpart!(is_hfss_portimpedance, get_hfss_portimpedance, ps, ts, line, f)
 f_hfss_port(ps, ts, line, f) = checkpart!(is_hfss_port, get_hfss_port, ps, ts, line, f)
 f_hfss_modaldata(ps, ts, line, f) = checkpart!(is_hfss_modaldata, get_hfss_modaldata, ps, ts, line, f)
-#TODO: HFSS terminal data
+f_hfss_terminaldata(ps, ts, line, f) = checkpart!(is_hfss_terminaldata, get_hfss_terminaldata, ps, ts, line, f)

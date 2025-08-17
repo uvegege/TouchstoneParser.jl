@@ -1,6 +1,13 @@
-function write_touchstone(filename, F, A, z0; version = "", default_comments = true,
+using Printf
+using Dates
+
+function write_touchstone(filename, F, A, z0; version = "", default_comments = true, default_date = true,
     matrixformat = :FULL, twoportorder = "12_21", noise_data = nothing, noise_f = nothing, 
-    funit = :GHz, ptype = :S, format = :RI)
+    funit = :GHz, ptype = :S, format = :RI, mixed_mode_order = "")
+
+    if !isa(z0, AbstractArray)
+        z0 = [z0]
+    end
 
     nports = size(A,1)
 
@@ -16,7 +23,7 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
             if version > "2"
                 name = filename * ".ts"
             else
-                name = filename * lowercase(string(ptype)) * string(nports) * "p"
+                name = filename * "." * lowercase(string(ptype)) * string(nports) * "p"
             end
         else
             ptype = Symbol(uppercase(string(extension[1])))
@@ -25,23 +32,28 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
  
     io = open(name, "w")
     default_comments && write(io, "! Touchstone file created with TouchstoneParser.jl\n")
-    write(io, "! Created on $(Dates.format(now(), "EEEE d U yyyy, HH:MM:SS")) \n")
-    write(io, "! ", string(nports), "-port ", string(ptype),"-parameter data\n")
+    default_date && write(io, "! Created on $(Dates.format(now(), "EEEE d U yyyy, HH:MM:SS")) \n")
+    default_date && write(io, "! ", string(nports), "-port ", string(ptype),"-parameter data\n")
 
     if version > "2"
         write(io, "[Version] ", version, "\n")
     end
 
-    # Comment line
-    #write(io, "# $funit $tstype $format R $Ri\n")
-    write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
-
     if version > "2"
         write(io, "[Number of Ports] ", string(nports), "\n")
-        write(io, "[Two-Port Data Order] ", string(twoportorder), "\n")
+        nports == 2 && write(io, "[Two-Port Data Order] ", string(twoportorder), "\n")
         write(io, "[Number of Frequencies] ", string(length(F)), "\n")
-        write(io, "[Reference] \n", join(z0, " "), "\n")
+        if length(z0) != nports
+            z0 = repeat(z0, nports)
+            write(io, "[Reference] \n", join(z0, " "), "\n")
+        end
+        write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
+        if !isempty(mixed_mode_order)
+            write(io, "[Mixed-Mode Order]", mixed_mode_order)
+        end
         write(io, "[Network Data] \n")
+    else
+        write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
     end
 
     lenF = length(F)
@@ -53,6 +65,7 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
 
     for (frequency, parameters) in zip(F, M)
         write(io, @sprintf("%.5f              ", frequency))
+        parameters = transpose(parameters)
         for idp_ in CartesianIndices(parameters)
             idp = CartesianIndex(idp_.I[2], idp_.I[1])
             p = parameters[idp]
@@ -66,20 +79,20 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
                 p1 = real(p)
                 p2 = imag(p)
             end
-    
+
             if (matrixformat === :UPPER)
                 if (idp.I[1] <= idp.I[2])
-                    write(io, @sprintf("%.10f      ", p1))
-                    write(io, @sprintf("%.10f              ", p2))    
+                    write(io, @sprintf("%.9f      ", p1))
+                    write(io, @sprintf("%.9f              ", p2))    
                 end
             elseif (matrixformat === :LOWER)
                 if (idp.I[1] >= idp.I[2])
-                    write(io, @sprintf("%.10f      ", p1))
-                    write(io, @sprintf("%.10f              ", p2))    
+                    write(io, @sprintf("%.9f      ", p1))
+                    write(io, @sprintf("%.9f              ", p2))    
                 end
             else    
-                write(io, @sprintf("%.10f      ", p1))
-                write(io, @sprintf("%.10f              ", p2))    
+                write(io, @sprintf("%.9f      ", p1))
+                write(io, @sprintf("%.9f              ", p2))    
             end
 
             if (idp.I[2] == 4) & (idp.I[1] <= sA[1])
@@ -113,18 +126,3 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
     close(io)
     return nothing
 end
-
-
-# F = [1,2]
-# 
-# A = [11 12 13 14 15 16;
-#      21 22 23 24 25 26;
-#      31 32 33 34 35 36;
-#      41 42 43 44 45 46;
-#      51 52 53 54 55 56;
-#      61 62 63 64 65 66;
-#      ] |> x->Complex.(x)
-# A = [A, A]
-# using Dates
-# write_touchstone("example1.ts", F, A, 50)
-

@@ -1,19 +1,15 @@
 module TouchstoneParser
 
-export Touchstone
-export readfile, writefile
-export to_S, to_Z, to_Y, to_H, to_G
-export tsData, tsFreq
+export readfile, write_touchstone
+export s2h, s2g, h2s, g2s, h2g, s2y, y2s, y2s_alternative, s2z, s2z_alternative, z2s
+export TSParser
 export simparameters
 
 include("./TouchstoneTypes.jl")
 include("./utils.jl")
+include("./Transformations.jl")
 include("./ParserFunctions.jl")
 include("./TouchstoneReader.jl")
 include("./TouchstoneWriter.jl")
 
 end
-
-#using .TouchstoneParser: readfile
-#cd("C://MisProyecto//Upload//TouchstoneParser")
-#algo = readfile("./Examples/example_conn.s2p")

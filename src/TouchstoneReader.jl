@@ -11,7 +11,7 @@ function process_section!(parserstate, touchstone, line, f, section_tags)
     return some
 end
 
-#TODO: Add somewhere f_hfss_gamma, f_hfss_portimpedance, f_hfss_port, f_hfss_modaldata,
+
 function readfile(file)
 
     ps = ParserState()
@@ -19,11 +19,11 @@ function readfile(file)
     section = :Start
 
     process_extension!(ts, ps, file)
-
+    
     process = Dict(
-        :Start      => (f_version, f_optionline, f_nports, f_comment),
+        :Start      => (f_version, f_optionline, f_n_ports, f_comment),
         :KeyOptions => (f_twoport_order, f_n_freqs, f_noise_freqs, f_reference, f_matrixformat, 
-                        f_mixedmode_order, f_info, f_comment),
+                        f_mixedmode_order, f_info, f_comment, f_optionline),
         :Data       => (f_networkdata, f_noisedata, f_comment)
     )
 
@@ -35,10 +35,10 @@ function readfile(file)
         if section === :Start
             section = in_section ? :Start : 
                       ts.version >= "2.0" ? :KeyOptions : :Data
-            section === :Data && seek(f, pos)
+            section !== :Start && (seek(f, pos); seekline!(ps))
         elseif section === :KeyOptions
             section = in_section ? :KeyOptions : :Data 
-            section === :Data && seek(f, pos)
+            section === :Data && (seek(f, pos); seekline!(ps))
         else # === :Data 
             if !in_section
                 get_networkdata(ps, ts, line, f)
@@ -50,5 +50,4 @@ function readfile(file)
     
     verify_touchstone(ts, ps, file, f)
     return ts
-    #return Touchstone{ts.type}(ts.frequency, stack(ts.v), ts.noise_frequency, ts.noise_data)
 end
