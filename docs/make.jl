@@ -1,4 +1,6 @@
-1+1
+cd("C:\\MisProyecto\\Upload\\TouchstoneParser\\docs")
+using Pkg
+Pkg.activate(".")
 using Documenter
 using TouchstoneParser
 

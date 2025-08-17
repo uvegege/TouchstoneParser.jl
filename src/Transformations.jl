@@ -124,7 +124,7 @@ Converts **G** parameters to **H** parameters.
 """
 g2h(H) = h2g(H)
 
-"""
+@doc raw"""
     s2y(S, Z0)
 
 Converts scattering parameters **S** to admittance parameters **Y** in a numerically stable way.
@@ -134,10 +134,7 @@ Converts scattering parameters **S** to admittance parameters **Y** in a numeric
 - `Z0::Number` or `Vector`: Reference characteristic impedance(s).
 
 ## Formula
-``
-\\[
-Y = Z_0^{-1/2} ((I + S) \\ (I - S)) Z_0^{-1/2}
-\\]``
+``Y = Z_0^{-1/2} ((I + S) \ (I - S)) Z_0^{-1/2}``
 """
 function s2y(S, Z0)
     n = size(S, 1)
@@ -148,7 +145,7 @@ function s2y(S, Z0)
 end
 
 
-"""
+@doc raw"""
     y2s(Y, Z0)
 
 Converts admittance parameters **Y** to scattering parameters **S** in a numerically stable way.
@@ -158,11 +155,7 @@ Converts admittance parameters **Y** to scattering parameters **S** in a numeric
 - `Z0::Number` or `Vector`: Reference characteristic impedance(s).
 
 ## Formula
-``
-\\[
-S = \\left( I + \\sqrt{Z_0} Y \\sqrt{Z_0} \\right)^{-1}
-    \\left( I - \\sqrt{Z_0} Y \\sqrt{Z_0} \\right)
-\\]``
+``S = \left( I + \sqrt{Z_0} Y \sqrt{Z_0} \right)^{-1} \left( I - \sqrt{Z_0} Y \sqrt{Z_0} \right)``
 """
 function y2s(Y, Z0)
     n = size(Y,1)
@@ -174,7 +167,7 @@ function y2s(Y, Z0)
 end
 
 
-"""
+@doc raw"""
     y2s_alternative(Y, Z0)
 
 Alternative version of `y_to_s` using diagonal scaling factors.
@@ -184,11 +177,8 @@ Alternative version of `y_to_s` using diagonal scaling factors.
 - `Z0::Number` or `Vector`: Reference characteristic impedance(s).
 
 ## Formula
-``
-\\[
-S = \\left( Z_0^{-1/2} + Y Z_0^{1/2} \\right)^{-1}
-    \\left( Z_0^{-1/2} - Y Z_0^{1/2} \\right)
-\\]``
+
+`` S = \left( Z_0^{-1/2} + Y Z_0^{1/2} \right)^{-1} \left( Z_0^{-1/2} - Y Z_0^{1/2} \right)``
 """
 function y2s_alternative(Y, Z0)
     n = size(Y,1)
@@ -198,7 +188,7 @@ function y2s_alternative(Y, Z0)
 end
 
 
-"""
+@doc raw"""
     s2z(S, Z0)
 
 Converts scattering parameters **S** to impedance parameters **Z** in a numerically stable way.
@@ -208,10 +198,9 @@ Converts scattering parameters **S** to impedance parameters **Z** in a numerica
 - `Z0::Number` or `Vector`: Reference characteristic impedance(s).
 
 ## Formula
-``
-\\[
-Z = Z_0^{1/2} ((I - S) \\ (I + S)) Z_0^{1/2}
-\\]``
+
+``Z = Z_0^{1/2} ((I - S) \ (I + S)) Z_0^{1/2}``
+
 """
 function s2z(S, Z0)
     n = size(S, 1)
@@ -220,7 +209,7 @@ function s2z(S, Z0)
 end
 
 
-"""
+@doc raw"""
     s2z_alternative(S, Z0)
 
 Conversion from **S** to **Z**.
@@ -230,17 +219,11 @@ Conversion from **S** to **Z**.
 - `Z0::Number` or `Vector`: Reference characteristic impedance(s).
 
 ## Formula
-``
-\\[
-Z = Z_0^{1/2} (I + S) / (I - S)  Z_0^{1/2}
-\\]``
+``Z = Z_0^{1/2} (I + S) / (I - S)  Z_0^{1/2}``
 
 Better stability than the direct version:
 
-``
-\\[
-Z = Z_0^{1/2} (I + S) * inv(I - S) Z_0^{1/2}
-\\]``
+``Z = Z_0^{1/2} (I + S) * inv(I - S) Z_0^{1/2}``
 
 """
 function s2z_alternative(S, Z0)
@@ -250,7 +233,7 @@ function s2z_alternative(S, Z0)
 end
 
 
-"""
+@doc raw"""
     z2s(Z, Z0)
 
 Converts impedance parameters **Z** to scattering parameters **S**.
@@ -260,11 +243,7 @@ Converts impedance parameters **Z** to scattering parameters **S**.
 - `Z0::Number` or `Vector`: Reference characteristic impedance(s).
 
 ## Formula
-``
-\\[
-S = \\left( Z Z_0^{-1/2} + Z_0^{1/2} \\right)^{-1}
-    \\left( Z Z_0^{-1/2} - Z_0^{1/2} \\right)
-\\]``
+``S = \left( Z Z_0^{-1/2} + Z_0^{1/2} \right)^{-1} \left( Z Z_0^{-1/2} - Z_0^{1/2} \right)``
 """
 function z2s(Z, Z0)
     n = size(Z, 1)
