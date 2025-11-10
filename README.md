@@ -7,7 +7,7 @@ It implements the specification (versions **1.0, 1.1, 2.0 and 2.1**) and provide
 
 ## Notes
 
-This package is currently **unregistered**. While the core functionality has been tested using examples from the official Touchstone specification, it has **not been extensively validated** against a wide variety of real-world files. Contributions or bug reports are welcome.
+While the core functionality has been tested using examples from the official Touchstone specification, it has **not been extensively validated** against a wide variety of real-world files. Contributions or bug reports are welcome.
 
 Another option you can consider is [Touchstone.jl](https://github.com/mpichl87/Touchstone.jl), which to the best of my knowledge is fully functional.
 
