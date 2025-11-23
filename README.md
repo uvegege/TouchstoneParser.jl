@@ -29,7 +29,7 @@ Another option you can consider is [Touchstone.jl](https://github.com/mpichl87/T
 ## Installation
 
 ```julia
-] add https://github.com/uvegege/TouchstoneParser.jl
+] add TouchstoneParser
 ```
 
 ## Usage

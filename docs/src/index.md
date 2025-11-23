@@ -24,7 +24,7 @@ While the core functionality has been tested using examples from the official To
 ## Installation
 
 ```julia
-] add https://github.com/uvegege/TouchstoneParser.jl
+] add TouchstoneParser
 ```
 
 ## Usage
