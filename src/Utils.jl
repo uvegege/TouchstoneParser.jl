@@ -1,3 +1,22 @@
+@static if VERSION < v"1.9"
+    """
+        stack(A::Vector{Matrix{T}})
+
+    NON GENERIC stack for version <1.9.
+    """
+    function stack(A::Vector{Matrix{T}}) where T
+        l = length(A)
+        ssize = size(A[1])
+        M = Array{ComplexF64,3}(undef, ssize[1], ssize[2], l)
+        for (idx,a) in enumerate(A)
+            M[:, :, idx] .= a
+        end
+        return M
+    end
+end
+
+
+
 to_values(a, b, ::Val{:MA}) = a * cis(deg2rad(b)) #Complex(a * cos(deg2rad(b)), -a * sin(deg2rad(b)))
 to_values(a, b, ::Val{:DB}) = 10.0^(a/20.0) * cis(deg2rad(b)) #Complex(10.0^(a/20.0) * cos(deg2rad(b)), 10.0^(a/20.0) * sin(deg2rad(b)))
 to_values(a, b, ::Val{:RI}) = Complex(a, b)

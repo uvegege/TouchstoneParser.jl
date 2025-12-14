@@ -69,7 +69,7 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
     
 
     if version > "2"
-        write(io, "# ", funit, " ", ptype, " ", format, "  R ", z0[1], "\n")
+        write(io, "# ", funit, " ", ptype, " ", format, "  R ", string(z0[1]), "\n")
         write(io, "[Number of Ports] ", string(nports), "\n")
         nports == 2 && write(io, "[Two-Port Data Order] ", string(twoportorder), "\n")
         write(io, "[Number of Frequencies] ", string(length(F)), "\n")
@@ -79,7 +79,7 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
         if length(z0) != nports
             z0 = repeat(z0, nports)
         end
-            write(io, "[Reference] \n", join(z0, " "), "\n")
+            write(io, "[Reference] ", join(z0, " "), "\n")
 
         if !isempty(mixed_mode_order)
             write(io, "[Mixed-Mode Order]", mixed_mode_order, "\n")
@@ -87,9 +87,9 @@ function write_touchstone(filename, F, A, z0; version = "", default_comments = t
         write(io, "[Network Data] \n")
     else
         if version == "1.0"
-            write(io, "# ", funit, " ", ptype, " ", format, "  R ", z0[1], "\n")
+            write(io, "# ", funit, " ", ptype, " ", format, "  R ", string(z0[1]), "\n")
         else
-            write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0," "), "\n")
+            write(io, "# ", funit, " ", ptype, " ", format, "  R ", join(z0, " "), "\n")
         end
         write(io, "! NETWORK data \n")
     end

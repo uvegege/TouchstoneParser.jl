@@ -149,14 +149,15 @@ end
 
 #TODO: Revisar si el orden por defecto es "12_21" o "21_12" 
 TSParser() = TSParser("", "1.0", 0, :S, :MA, [50], :GHZ, 0, 0, Float64[],
-    "12_21", "", :FULL, String[], Float64[], [;;;],
-    Float64[], NoiseData[], ComplexF64[;;],
-    :unknown, ComplexF64[], ComplexF64[], ComplexF64[;;], # HFSS
+    "12_21", "", :FULL, String[], Float64[], Array{ComplexF64, 3}(undef, 0, 0, 0),
+    Float64[], NoiseData[], Matrix{ComplexF64}(undef, 0, 0),
+    :unknown, ComplexF64[], ComplexF64[], Matrix{ComplexF64}(undef, 0, 0), # HFSS
     String[], String[], ParserState())
+
 TSParser(file) = TSParser(file, "1.0", 0, :S, :MA, [50], :GHZ, 0, 0, Float64[],
-    "12_21", "", :FULL, String[], Float64[], [;;;],
-    Float64[], NoiseData[], ComplexF64[;;],
-    :unknown, ComplexF64[], ComplexF64[], ComplexF64[;;], # HFSS
+    "12_21", "", :FULL, String[], Float64[], Array{ComplexF64, 3}(undef, 0, 0, 0),
+    Float64[], NoiseData[],  Matrix{ComplexF64}(undef, 0, 0),
+    :unknown, ComplexF64[], ComplexF64[],  Matrix{ComplexF64}(undef, 0, 0), # HFSS
     String[], String[], ParserState())
 
 

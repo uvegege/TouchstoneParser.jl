@@ -2,7 +2,6 @@ using TouchstoneParser
 using Test
 using LinearAlgebra
 
-
 @testset "write_touchstone" begin
 
     F = [1,2]
@@ -13,7 +12,10 @@ using LinearAlgebra
          [51, 52, 53, 54, 55, 56];; 
          [61, 62, 63, 64, 65, 66] 
          ] |> x -> Complex.(x)
-    A = [A;;;A]
+    A = @static if VERSION < v"1.9"
+        A = reshape(A, 6, 6)
+    end
+    A = @static VERSION < v"1.9" ? TouchstoneParser.stack([A, A]) : stack([A, A])
     
     TouchstoneParser.write_touchstone("testfile.ts", F, A, 50, default_comments = false, version = "2.0", default_date = false)
     ts = TouchstoneParser.read_touchstone("testfile.ts")
@@ -166,7 +168,6 @@ end
 
 
 # Round-Trip tests for Matrix transformations
-using LinearAlgebra: norm
 @testset "Transformations" begin
 
     N = 10;
@@ -175,18 +176,16 @@ using LinearAlgebra: norm
     
     threshold = 1.0e-10
 
-    @test norm(S - TouchstoneParser.y_to_s_stable(TouchstoneParser.s_to_y_stable(S, Z0), Z0)) <= threshold
-    @test norm(S - TouchstoneParser.TouchstoneParser.y_to_s_alternative(TouchstoneParser.s_to_y_stable(S, Z0), Z0)) <= threshold
+    @test norm(S - TouchstoneParser.y2s(TouchstoneParser.s2y(S, Z0), Z0)) <= threshold
+    @test norm(S - TouchstoneParser.TouchstoneParser.y2s_alternative(TouchstoneParser.s2y(S, Z0), Z0)) <= threshold
 
-    @test norm(S - TouchstoneParser.s_to_y_stable(TouchstoneParser.y_to_s_stable(S, Z0), Z0)) <= threshold
-    @test norm(S - TouchstoneParser.s_to_y_stable(TouchstoneParser.y_to_s_alternative(S, Z0), Z0)) <= threshold
+    @test norm(S - TouchstoneParser.s2y(TouchstoneParser.y2s(S, Z0), Z0)) <= threshold
+    @test norm(S - TouchstoneParser.s2y(TouchstoneParser.y2s_alternative(S, Z0), Z0)) <= threshold
 
     @test norm(S - TouchstoneParser.z2s(TouchstoneParser.s2z(S, Z0), Z0)) <= threshold
-    @test norm(S - TouchstoneParser.z2s(TouchstoneParser.s_to_z_stable(S, Z0), Z0)) <= threshold
-    
+    @test norm(S - TouchstoneParser.z2s(TouchstoneParser.s2z(S, Z0), Z0)) <= threshold
     @test norm(S - TouchstoneParser.s2z(TouchstoneParser.z2s(S, Z0), Z0)) <= threshold
-    @test norm(S - TouchstoneParser.s_to_z_stable(TouchstoneParser.z2s(S, Z0), Z0)) <= threshold
-
+    @test norm(S - TouchstoneParser.s2z_alternative(TouchstoneParser.z2s(S, Z0), Z0)) <= threshold
 end
 
 @testset "Transformations2" begin
@@ -196,5 +195,5 @@ end
     for z in 1:length(ex.frequency)
         m2[:,:,z] .= @views TouchstoneParser.s2z(ex.data[:,:, z], ex.z0[:, z])
     end
-    @test stack(m1) == m2
+    @test (@static VERSION < v"1.9" ? TouchstoneParser.stack(m1) : stack(m1)) == m2
 end
